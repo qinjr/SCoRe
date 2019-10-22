@@ -102,3 +102,13 @@ venv.bak/
 
 # mypy
 .mypy_cache/
+
+*.txt
+*.csv
+*.png
+logs*/
+*.pdf
+save_model*/
+tf_summary_score/
+.DS_Store
+
