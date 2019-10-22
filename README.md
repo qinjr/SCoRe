@@ -21,7 +21,7 @@ To tackle the problems of the current sequential recommendation models, we propo
 - [sklearn](https://scikit-learn.org)
 
 ## Data Preparation & Preprocessing
-- We give a sample raw data in the `score-data` folder. The full raw datasets are: [CCMR](http://apex.sjtu.edu.cn/datasets/6), [Taobao](https://tianchi.aliyun.com/dataset/dataDetail?dataId=42) and [Tmall](https://tianchi.aliyun.com/dataset/dataDetail?dataId=649).
+- We give a sample raw data in the `score-data` folder. The full raw datasets are: [CCMR](http://apex.sjtu.edu.cn/datasets/6), [Tmall](https://tianchi.aliyun.com/dataset/dataDetail?dataId=42) and [Taobao](https://tianchi.aliyun.com/dataset/dataDetail?dataId=649). **Remove the first line of table head**.
 - Feature Engineering:
 ```
 python3 feateng_ccmr.py # for CCMR
