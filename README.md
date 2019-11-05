@@ -44,7 +44,7 @@ python3 sampling.py [dataset] # sampling
 ## Train the Models
 For the convience of writing the code, we categorize the models in three folds: `point_model/`, `slice_model/` and `score/`.
 
-- To run SCoRe, model_type=['SCoRe']:
+- To run SCoRe, model_type=['SCoRe', 'RIA', 'RCA', 'SCORE_USER', 'SCORE_ITEM']:
 ```
 cd score/
 python3 train_score.py [model_name][gpu][dataset]

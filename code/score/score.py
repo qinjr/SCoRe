@@ -223,3 +223,147 @@ class SCORE(SCOREBASE):
         self.build_l2norm()
         self.build_train_step()
     
+# Ablation models: RIA, RCA, SCORE_USER, SCORE_ITEM
+class RIA(SCOREBASE):
+    def __init__(self, feature_size, eb_dim, hidden_size, max_time_len, 
+                obj_per_time_slice, user_fnum, item_fnum):
+        super(RIA, self).__init__(feature_size, eb_dim, hidden_size, max_time_len, obj_per_time_slice, user_fnum, item_fnum)
+        self.mask = tf.expand_dims(tf.sequence_mask(self.length_ph, max_time_len, dtype=tf.float32), axis=-1)
+        self.target_user_t = tf.tile(tf.expand_dims(self.target_user, axis=1), [1, max_time_len, 1])
+        self.target_item_t = tf.tile(tf.expand_dims(self.target_item, axis=1), [1, max_time_len, 1])
+
+        user_1hop_seq, item_2hop_seq, atten_info_item = self.co_attention(self.user_1hop, self.item_2hop, self.target_item_t)
+        user_2hop_seq, item_1hop_seq, atten_info_user = self.co_attention(self.user_2hop, self.item_1hop, self.target_user_t)
+        atten_info = atten_info_item + atten_info_user
+        
+        user_side = tf.concat([user_1hop_seq, user_2hop_seq], axis=2)
+        item_side = tf.concat([item_1hop_seq, item_2hop_seq], axis=2)
+
+        # RNN
+        with tf.name_scope('rnn'):
+            _, user_side_final_state = tf.nn.dynamic_rnn(GRUCell(hidden_size), inputs=user_side, 
+                                                        sequence_length=self.length_ph, dtype=tf.float32, scope='gru_user_side')
+            _, item_side_final_state = tf.nn.dynamic_rnn(GRUCell(hidden_size), inputs=item_side, 
+                                                        sequence_length=self.length_ph, dtype=tf.float32, scope='gru_item_side')
+        
+        inp = tf.concat([user_side_final_state, item_side_final_state, self.target_item, self.target_user], axis=1)
+
+        # fc layer
+        self.build_fc_net(inp)
+        # build loss
+        self.build_logloss()
+        self.build_l2norm()
+        self.build_train_step()
+
+class RCA(SCOREBASE):
+    def __init__(self, feature_size, eb_dim, hidden_size, max_time_len, 
+                obj_per_time_slice, user_fnum, item_fnum):
+        super(RCA, self).__init__(feature_size, eb_dim, hidden_size, max_time_len, obj_per_time_slice, user_fnum, item_fnum)
+        self.mask = tf.expand_dims(tf.sequence_mask(self.length_ph, max_time_len, dtype=tf.float32), axis=-1)
+        self.target_user_t = tf.tile(tf.expand_dims(self.target_user, axis=1), [1, max_time_len, 1])
+        self.target_item_t = tf.tile(tf.expand_dims(self.target_item, axis=1), [1, max_time_len, 1])
+
+        user_1hop_seq = tf.reduce_sum(self.user_1hop, axis=2)
+        user_2hop_seq = tf.reduce_sum(self.user_2hop, axis=2)
+        item_1hop_seq = tf.reduce_sum(self.item_1hop, axis=2)
+        item_2hop_seq = tf.reduce_sum(self.item_2hop, axis=2)
+        
+        user_side = tf.concat([user_1hop_seq, user_2hop_seq], axis=2)
+        item_side = tf.concat([item_1hop_seq, item_2hop_seq], axis=2)
+
+        # RNN
+        with tf.name_scope('rnn'):
+            user_side_rep_t, _ = tf.nn.dynamic_rnn(GRUCell(hidden_size), inputs=user_side, 
+                                                        sequence_length=self.length_ph, dtype=tf.float32, scope='gru_user_side')
+            item_side_rep_t, _ = tf.nn.dynamic_rnn(GRUCell(hidden_size), inputs=item_side, 
+                                                        sequence_length=self.length_ph, dtype=tf.float32, scope='gru_item_side')
+        
+        self.query = tf.concat([self.target_user, self.target_item], axis=1)
+        self.key = tf.concat([user_side_rep_t, item_side_rep_t], axis=2)
+        self.value = tf.concat([user_side_rep_t, item_side_rep_t], axis=2)
+        score = self.attention(self.key, self.value, self.query, self.mask)
+        user_final_state = tf.reduce_sum(user_side_rep_t * score, axis=1)
+        item_final_state = tf.reduce_sum(item_side_rep_t * score, axis=1)
+        
+        inp = tf.concat([user_final_state, item_final_state, self.target_item, self.target_user], axis=1)
+
+        # fc layer
+        self.build_fc_net(inp)
+        # build loss
+        self.build_logloss()
+        self.build_l2norm()
+        self.build_train_step()
+        
+class SCORE_USER(SCOREBASE):
+    def __init__(self, feature_size, eb_dim, hidden_size, max_time_len, 
+                obj_per_time_slice, user_fnum, item_fnum):
+        super(SCORE_USER, self).__init__(feature_size, eb_dim, hidden_size, max_time_len, obj_per_time_slice, user_fnum, item_fnum)
+        self.mask = tf.expand_dims(tf.sequence_mask(self.length_ph, max_time_len, dtype=tf.float32), axis=-1)
+        self.target_user_t = tf.tile(tf.expand_dims(self.target_user, axis=1), [1, max_time_len, 1])
+        self.target_item_t = tf.tile(tf.expand_dims(self.target_item, axis=1), [1, max_time_len, 1])
+
+        user_1hop_seq, item_2hop_seq, atten_info_item = self.co_attention(self.user_1hop, self.item_2hop, self.target_item_t)
+        user_2hop_seq, item_1hop_seq, atten_info_user = self.co_attention(self.user_2hop, self.item_1hop, self.target_user_t)
+        atten_info = tf.concat([atten_info_item, atten_info_user], axis=2)
+        
+        user_side = tf.concat([user_1hop_seq, user_2hop_seq], axis=2)
+        item_side = tf.concat([item_1hop_seq, item_2hop_seq], axis=2)
+
+        # RNN
+        with tf.name_scope('rnn'):
+            user_side_rep_t, _ = tf.nn.dynamic_rnn(GRUCell(hidden_size), inputs=user_side, 
+                                                        sequence_length=self.length_ph, dtype=tf.float32, scope='gru_user_side')
+            item_side_rep_t, _ = tf.nn.dynamic_rnn(GRUCell(hidden_size), inputs=item_side, 
+                                                        sequence_length=self.length_ph, dtype=tf.float32, scope='gru_item_side')
+        
+        self.query = tf.concat([self.target_user, self.target_item], axis=1)
+        self.key = tf.concat([user_side_rep_t, item_side_rep_t, atten_info], axis=2)
+        self.value = tf.concat([user_side_rep_t, item_side_rep_t], axis=2)
+        score = self.attention(self.key, self.value, self.query, self.mask)
+        user_final_state = tf.reduce_sum(user_side_rep_t * score, axis=1)
+
+        inp = tf.concat([user_final_state, self.target_item, self.target_user], axis=1)
+
+        # fc layer
+        self.build_fc_net(inp)
+        # build loss
+        self.build_logloss()
+        self.build_l2norm()
+        self.build_train_step()
+
+class SCORE_ITEM(SCOREBASE):
+    def __init__(self, feature_size, eb_dim, hidden_size, max_time_len, 
+                obj_per_time_slice, user_fnum, item_fnum):
+        super(SCORE_ITEM, self).__init__(feature_size, eb_dim, hidden_size, max_time_len, obj_per_time_slice, user_fnum, item_fnum)
+        self.mask = tf.expand_dims(tf.sequence_mask(self.length_ph, max_time_len, dtype=tf.float32), axis=-1)
+        self.target_user_t = tf.tile(tf.expand_dims(self.target_user, axis=1), [1, max_time_len, 1])
+        self.target_item_t = tf.tile(tf.expand_dims(self.target_item, axis=1), [1, max_time_len, 1])
+
+        user_1hop_seq, item_2hop_seq, atten_info_item = self.co_attention(self.user_1hop, self.item_2hop, self.target_item_t)
+        user_2hop_seq, item_1hop_seq, atten_info_user = self.co_attention(self.user_2hop, self.item_1hop, self.target_user_t)
+        atten_info = tf.concat([atten_info_item, atten_info_user], axis=2)
+        
+        user_side = tf.concat([user_1hop_seq, user_2hop_seq], axis=2)
+        item_side = tf.concat([item_1hop_seq, item_2hop_seq], axis=2)
+
+        # RNN
+        with tf.name_scope('rnn'):
+            user_side_rep_t, _ = tf.nn.dynamic_rnn(GRUCell(hidden_size), inputs=user_side, 
+                                                        sequence_length=self.length_ph, dtype=tf.float32, scope='gru_user_side')
+            item_side_rep_t, _ = tf.nn.dynamic_rnn(GRUCell(hidden_size), inputs=item_side, 
+                                                        sequence_length=self.length_ph, dtype=tf.float32, scope='gru_item_side')
+        
+        self.query = tf.concat([self.target_user, self.target_item], axis=1)
+        self.key = tf.concat([user_side_rep_t, item_side_rep_t, atten_info], axis=2)
+        self.value = tf.concat([user_side_rep_t, item_side_rep_t], axis=2)
+        score = self.attention(self.key, self.value, self.query, self.mask)
+        item_final_state = tf.reduce_sum(item_side_rep_t * score, axis=1)
+
+        inp = tf.concat([item_final_state, self.target_item, self.target_user], axis=1)
+
+        # fc layer
+        self.build_fc_net(inp)
+        # build loss
+        self.build_logloss()
+        self.build_l2norm()
+        self.build_train_step()
