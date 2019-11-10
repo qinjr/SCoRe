@@ -3,7 +3,7 @@ A `tensorflow` implementation of all the compared models for our WSDM 2020 paper
 
 [Sequential Recommendation with Dual SideNeighbor-based Collaborative Relation Modeling](https://arxiv.org)
 
-If you have any questions, please contact the author: [Jiarui Qin](qinjr@icloud.com).
+If you have any questions, please contact the author: [Jiarui Qin](http://jiaruiqin.me).
 
 
 ## Abstract
@@ -13,6 +13,16 @@ Various sequential recommendation methods are proposed to model the dynamic user
 Worse still, most existing methods only consider the user-side sequence and ignore the temporal dynamics on the item side.
 To tackle the problems of the current sequential recommendation models, we propose Sequential Collaborative Recommender (SCoRe) which effectively mines high-order collaborative information using cross-neighbor relation modeling and, additionally utilizes both user-side and item-side historical sequences to better capture user and item dynamics. Experiments on three real-world yet large-scale datasets demonstrate the superiority of the proposed model over strong baselines.
 
+## Citation
+```
+@inproceedings{qin2020sequential,
+	title={Sequential Recommendation with Dual Side Neighbor-based Collaborative Relation Modeling},
+	author={Qin, Jiarui and Ren, Kan and Fang, Yuchen and Zhang, Weinan and Yu, Yong},
+	booktitle={Proceedings of the Thirteenth ACM International Conference on Web Search and Data Mining (WSDM '20)},
+	year={2020},
+	organization={ACM}
+}
+```
 ## Dependencies
 - [Tensorflow](https://www.tensorflow.org) >= 1.4
 - [Python](https://www.python.org) >= 3.5
@@ -21,7 +31,7 @@ To tackle the problems of the current sequential recommendation models, we propo
 - [sklearn](https://scikit-learn.org)
 
 ## Data Preparation & Preprocessing
-- We give a sample raw data in the `score-data` folder. The full raw datasets are: [CCMR](http://apex.sjtu.edu.cn/datasets/6), [Tmall](https://tianchi.aliyun.com/dataset/dataDetail?dataId=42) and [Taobao](https://tianchi.aliyun.com/dataset/dataDetail?dataId=649). **Remove the first line of table head**.
+- We give a sample raw data in the `score-data` folder. The full raw datasets are: [Tmall](https://tianchi.aliyun.com/dataset/dataDetail?dataId=42), [Taobao](https://tianchi.aliyun.com/dataset/dataDetail?dataId=649) and [CCMR](http://apex.sjtu.edu.cn/datasets/6). **Remove the first line of table head**.
 - Feature Engineering:
 ```
 python3 feateng_ccmr.py # for CCMR

@@ -126,8 +126,10 @@ class GRU4Rec(PointBaseModel):
 
         # GRU
         with tf.name_scope('rnn'):
-            _, user_seq_final_state = tf.nn.dynamic_rnn(GRUCell(hidden_size), inputs=self.user_seq, 
+            user_seq_ht, _ = tf.nn.dynamic_rnn(GRUCell(hidden_size), inputs=self.user_seq, 
                                                         sequence_length=self.user_seq_length_ph, dtype=tf.float32, scope='gru1')
+            _, user_seq_final_state = tf.nn.dynamic_rnn(GRUCell(hidden_size), inputs=user_seq_ht, 
+                                                        sequence_length=self.user_seq_length_ph, dtype=tf.float32, scope='gru2')
         
         inp = tf.concat([user_seq_final_state, self.target_item, self.target_user], axis=1)
 
@@ -141,8 +143,8 @@ class Caser(PointBaseModel):
         
         with tf.name_scope('user_seq_cnn'):
             # horizontal filters
-            filters_user = 4
-            h_kernel_size_user = [10, eb_dim * item_fnum]
+            filters_user = 1
+            h_kernel_size_user = [50, eb_dim * item_fnum]
             v_kernel_size_user = [self.user_seq.get_shape().as_list()[1], 1]
 
             self.user_seq = tf.expand_dims(self.user_seq, 3)
@@ -231,7 +233,7 @@ class DELF(PointBaseModel):
         self.build_logloss()        
 
     def fusion_mlp(self, inp):
-        fc1 = tf.layers.dense(inp, 20, activation=tf.nn.relu)
+        fc1 = tf.layers.dense(inp, 10, activation=tf.nn.relu)
         fc2 = tf.layers.dense(fc1, 4, activation=tf.nn.relu)
         return fc2
 
