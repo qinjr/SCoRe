@@ -1,7 +1,7 @@
 # Sequential Collaborative Recommender (SCoRe)
 A `tensorflow` implementation of all the compared models for our WSDM 2020 paper:
 
-[Sequential Recommendation with Dual SideNeighbor-based Collaborative Relation Modeling](https://arxiv.org/abs/1911.03883)
+[Sequential Recommendation with Dual Side Neighbor-based Collaborative Relation Modeling](https://arxiv.org/abs/1911.03883)
 
 If you have any questions, please contact the author: [Jiarui Qin](http://jiaruiqin.me).
 
