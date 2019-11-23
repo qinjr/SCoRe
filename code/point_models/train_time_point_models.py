@@ -141,9 +141,9 @@ def eval(model_type, model, sess, target_file, max_time_len, reg_lambda, user_se
         labels += label
         losses.append(loss)
         if model_type == 'DELF' or model_type == 'DEEMS':
-            target_iids += np.array(batch_data[5]).tolist()
+            target_iids += np.array(batch_data[5])[:,0].tolist()
         else:
-            target_iids += np.array(batch_data[3]).tolist()
+            target_iids += np.array(batch_data[3])[:,0].tolist()
     logloss = log_loss(labels, preds)
     auc = roc_auc_score(labels, preds)
     loss = sum(losses) / len(losses)

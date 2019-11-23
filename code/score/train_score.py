@@ -154,7 +154,7 @@ def eval(model, sess, graph_handler_params, target_file, start_time, pred_time,
         preds += pred
         labels += label
         losses.append(loss)
-        target_iids += np.array(batch_data[5]).tolist()
+        target_iids += np.array(batch_data[5])[:,0].tolist()
     logloss = log_loss(labels, preds)
     auc = roc_auc_score(labels, preds)
     loss = sum(losses) / len(losses)
