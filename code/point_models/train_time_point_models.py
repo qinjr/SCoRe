@@ -211,9 +211,9 @@ def train(data_set, target_file_train, target_file_validation, user_seq_file_tra
             if early_stop:
                 break
             if model_type == 'DELF' or model_type == 'DEEMS':
-                data_loader = DataLoaderDualSeq(EVAL_BATCH_SIZE, max_time_len, target_file_train, user_seq_file_train, item_seq_file_train, TEST_NEG_SAMPLE_NUM, user_feat_dict_file, item_feat_dict_file)
+                data_loader = DataLoaderDualSeq(train_batch_size, max_time_len, target_file_train, user_seq_file_train, item_seq_file_train, TEST_NEG_SAMPLE_NUM, user_feat_dict_file, item_feat_dict_file)
             else:    
-                data_loader = DataLoaderUserSeq(EVAL_BATCH_SIZE, max_time_len, target_file_train, user_seq_file_train, TEST_NEG_SAMPLE_NUM, user_feat_dict_file, item_feat_dict_file)
+                data_loader = DataLoaderUserSeq(train_batch_size, max_time_len, target_file_train, user_seq_file_train, TEST_NEG_SAMPLE_NUM, user_feat_dict_file, item_feat_dict_file)
             
             for batch_data in data_loader:
                 if early_stop:
